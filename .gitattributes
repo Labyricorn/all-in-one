@@ -1,0 +1,4 @@
+# Keep Windows launchers native on checkout and normalized in Git.
+*.cmd text eol=crlf
+# Unified patches require a leading context space, including on blank lines.
+*.patch -whitespace

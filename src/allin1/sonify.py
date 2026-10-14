@@ -2,6 +2,7 @@ import numpy as np
 
 import torch
 import librosa
+import demucs.audio
 import demucs.separate
 
 from functools import partial
@@ -46,8 +47,7 @@ def _sonify(
   out_dir: PathLike = None,
 ) -> Tuple[NDArray, float]:
   sr = 44100
-  y = demucs.separate.load_track(result.path, 2, sr).numpy()
-  # y, sr = librosa.load(result.path, sr=None, mono=False)
+  y = demucs.audio.AudioFile(result.path).read(streams=0, samplerate=sr, channels=2).numpy()
 
   length = y.shape[-1]
   metronome = _sonify_metronome(result, length, sr)

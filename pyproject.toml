@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "allin1"
 dynamic = ["version"]
-description = "All-In-One Music Structure Analyzer"
+description = "Maintained All-In-One music analyzer with companion song CLI and lyrics/MCP tools"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -13,6 +13,7 @@ keywords = ["music", "beat", "downbeat", "tracking", "structure", "analysis", "a
 authors = [
   { name = "Taejun Kim", email = "taejun@kaist.ac.kr" },
 ]
+maintainers = [{ name = "Labyricorn" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Programming Language :: Python",
@@ -44,9 +45,9 @@ train = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/mir-aidj/all-in-one#readme"
-Issues = "https://github.com/mir-aidj/all-in-one/issues"
-Source = "https://github.com/mir-aidj/all-in-one"
+Documentation = "https://github.com/Labyricorn/all-in-one#readme"
+Issues = "https://github.com/Labyricorn/all-in-one/issues"
+Source = "https://github.com/Labyricorn/all-in-one"
 
 [project.scripts]
 allin1 = "allin1.cli:main"

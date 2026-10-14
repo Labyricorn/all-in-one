@@ -1,4 +1,20 @@
-# All-In-One Music Structure Analyzer
+# All-In-One Music Structure Analyzer — maintained Labyricorn fork
+
+This fork continues [Taejun Kim's original All-In-One analyzer](https://github.com/mir-aidj/all-in-one)
+and adds a local song-analysis CLI and MCP server: automatic lyrics, supplied-text
+alignment, estimated word/phrase timing, combined song maps, persistent jobs,
+offline operation and reviewable JSON/TXT/CSV reports. Windows Demucs compatibility
+fixes and a NATTEN build patch are included.
+
+**Start with [SETUP.md](SETUP.md)** for the full song/lyrics workflow and two isolated
+environments. `analyze-song.cmd` runs music plus lyrics; `analyze-music.cmd` runs
+music structure only. The companion source is in `song-mcp/`; it is run from this
+checkout and is not bundled into the `allin1` wheel. The upstream Python API and
+package name remain `allin1`. See [ATTRIBUTION.md](ATTRIBUTION.md) for provenance.
+
+The original MIT copyright/license and research citation below are retained.
+The following upstream guide describes the underlying structure analyzer.
+
 
 [![Visual Demo](https://img.shields.io/badge/Visual-Demo-8A2BE2)](https://taejun.kim/music-dissector/)
 [![arXiv](https://img.shields.io/badge/arXiv-2307.16425-B31B1B)](http://arxiv.org/abs/2307.16425/)

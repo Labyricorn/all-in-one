@@ -233,3 +233,16 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,linux
+# Local song-analysis runtime and user media
+song-jobs/
+song-results/
+model-cache/
+verification/
+.videos/
+process/
+.deps/
+*.mp4
+*.mov
+*.mkv
+client-config.local.json
+.codex/config.toml

@@ -1,0 +1,45 @@
+diff --git a/setup.py b/setup.py
+index 462b1be..dca7669 100644
+--- a/setup.py
++++ b/setup.py
+@@ -84,7 +84,7 @@ def get_extension():
+     assert not is_rocm_pytorch, "NATTEN does not support ROCM."
+ 
+     extension = CppExtension
+-    extra_compile_args = {"cxx": ["-O3"]}
++    extra_compile_args = {"cxx": ["/O2", "/Zc:preprocessor"] if os.name == "nt" else ["-O3"]}
+     define_macros = []
+     if TORCH_113:
+         # Torch 1.13 and above have a new dispatcher template
+diff --git a/src/natten/csrc/cpu/natten_cpu_commons.h b/src/natten/csrc/cpu/natten_cpu_commons.h
+index e6346a0..11cfd87 100644
+--- a/src/natten/csrc/cpu/natten_cpu_commons.h
++++ b/src/natten/csrc/cpu/natten_cpu_commons.h
+@@ -68,7 +68,7 @@ inline int get_pb_start(const int index, const int length, const int KERNEL_SIZE
+ 
+ 
+ #define _IN_LAUNCH_DNA_KNS(KS, NS, dilation, NAME, ...)                     \
+-({                                                                                                   \
++do {                                                                                                   \
+     switch (dilation) {                                                                              \
+         case 1:                                                                                      \
+             NAME<KS, NS, 1, scalar_t>(__VA_ARGS__);                     \
+@@ -122,10 +122,10 @@ inline int get_pb_start(const int index, const int length, const int KERNEL_SIZE
+             NAME<KS, NS, -1, scalar_t>(__VA_ARGS__);                    \
+             break;                                                                                   \
+     }                                                                                                \
+-})
++} while (0)
+ 
+ #define LAUNCH_DNA_KNS(kernel_size, dilation, NAME, ...)                 \
+-({                                                                                                   \
++do {                                                                                                   \
+     switch (kernel_size) {                                                                           \
+         case 3:                                                                                      \
+             _IN_LAUNCH_DNA_KNS(3, 1, dilation, NAME, __VA_ARGS__);          \
+@@ -149,4 +149,4 @@ inline int get_pb_start(const int index, const int length, const int KERNEL_SIZE
+             _IN_LAUNCH_DNA_KNS(-1, -1, dilation, NAME, __VA_ARGS__);        \
+             break;                                                                                   \
+     }                                                                                                \
+-})
++} while (0)

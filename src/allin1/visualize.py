@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.gridspec as gridspec
 import librosa.feature
-import demucs.separate
+import demucs.audio
 
 from functools import partial
 from multiprocessing import Pool
@@ -64,8 +64,7 @@ def _plot(
     colors = HARMONIX_COLORS
 
   sr = 44100
-  y = demucs.separate.load_track(result.path, 1, sr)[0].numpy()
-  # y, sr = librosa.load(result.path, sr=None, mono=True)
+  y = demucs.audio.AudioFile(result.path).read(streams=0, samplerate=sr, channels=1)[0].numpy()
   rms = librosa.feature.rms(y=y, frame_length=4096, hop_length=1024)[0]
 
   fig = plt.figure(figsize=(12, 2))
