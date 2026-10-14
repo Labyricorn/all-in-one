@@ -58,6 +58,11 @@ Example correction file (replace placeholders with the project read values):
 ```
 
 `schemas/correction.schema.json` and `schemas/project.schema.json` define version 1.
+`set_word_interval` also accepts `method: "guessed"` (with optional `basis`: `midpoint` or
+`even_spread`) so an estimated time is stored as `timing_status: "guessed"`, provenance
+method `guessed` and review state `needs_review`, and appears as a `guessed_word_timing`
+review item. A later `set_tags` with `review_state: "reviewed"` on that word, or any
+ordinary interval edit, makes it `user_set`. Guesses are interpolations, not alignments.
 Corrections support insert/delete/replace words and lines, split/merge adjacent
 lines, intervals, beat markers, selected-grid shift/stretch, section labels/bounds,
 voice/delivery tags and riff/event records. `set_tags` uses `kind` and `id` plus a
@@ -107,7 +112,8 @@ again opens the existing compatible service's UI. Open `BASE_URL/debug` for the 
 playback debugger. The review UI imports/opens projects, plays project-owned PCM,
 filters and selects lyric words, edits word text/timing, beat times and section
 labels/bounds, and commits changes as revision-checked transactions through the
-shared core. Song Studio starts on Analyze: select audio/video, choose a lyric
+shared core. Two-In-One Music and Lyric Analysis Studio starts on Analyze:
+select audio/video, choose a lyric
 workflow and start a detached job. Jobs shows actual stages, errors/cancellation
 and opens completed/partial results in Review with cached audio. Review adds
 a waveform, section bands, downbeat ticks and loops. Export downloads corrected
@@ -121,7 +127,7 @@ the cursor. `getOutputTimestamp()` drives the audible cursor when available;
 latency fallback and a configurable measured correction are supported. Physical
 speaker latency and device-specific compensation still need measurement. Browser
 testing does not certify future Tauri/WebView behavior. Long tracks currently load
-fully into memory. Song Studio renders a peak overview from decoded PCM;
+fully into memory. Two-In-One renders a peak overview from decoded PCM;
 streamed playback and waveform zoom remain future work.
 
 ## Versioned API
@@ -144,6 +150,7 @@ never caller-supplied media paths. Hash checks precede serving project-owned WAV
 | GET `/api/v1/projects/ID/history` | Revision audit records. |
 | POST `/api/v1/projects/ID/export` | Return selected analysis; optional body `revision`. |
 | GET `/api/v1/projects/ID/artifacts/mix` or `/vocals` | Validated PCM artifact, with range responses. |
+| GET `/api/v1/models` | Advisory report of cached lyric, alignment and music models (no downloads); the studio uses it to choose offline defaults. |
 | GET/POST `/api/v1/jobs` | List jobs or submit normalized analysis request. |
 | POST `/api/v1/media` | Copy a selected audio/video file from the browser, validate its stream, and return a path usable by job submission. |
 | GET `/api/v1/jobs/ID` | Durable progress and failure/log details. |

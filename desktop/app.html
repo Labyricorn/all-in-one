@@ -2,68 +2,217 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MGMV · Song Studio</title><link rel="stylesheet" href="/app/app.css">
+  <title>Two-In-One Music and Lyric Analysis Studio</title><link rel="stylesheet" href="/app/app.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand"><span class="brand-icon" aria-hidden="true">▥</span><div><h1>MGMV <span>Song Studio</span></h1><p>From audio to a timing map you can shape.</p></div></div>
-    <div class="connection"><span id="connectionStatus">Connecting…</span><details><summary>Connection settings</summary><label>Service token<input id="token" type="password" autocomplete="off"></label><button id="connect" type="button">Connect</button></details></div>
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon" aria-hidden="true">▥</span><div><h1>Two-In-One</h1><p>Music and lyric analysis studio</p></div></div>
+    <nav class="steps" role="tablist" aria-label="Workflow steps">
+      <button id="tab-song" role="tab" aria-selected="true" aria-controls="panel-song" data-tab="song"><b>1</b> Choose a song</button>
+      <button id="tab-progress" role="tab" aria-selected="false" aria-controls="panel-progress" data-tab="progress" tabindex="-1"><b>2</b> Analysis <small id="jobCount"></small></button>
+      <button id="tab-review" role="tab" aria-selected="false" aria-controls="panel-review" data-tab="review" tabindex="-1"><b>3</b> Review and fix</button>
+      <button id="tab-export" role="tab" aria-selected="false" aria-controls="panel-export" data-tab="export" tabindex="-1"><b>4</b> Export</button>
+    </nav>
+    <div class="connection"><button id="helpButton" type="button" class="quiet" aria-haspopup="dialog">Help</button><span id="connectionStatus">Connecting…</span>
+      <details><summary>Connection</summary><label>Service token<input id="token" type="password" autocomplete="off"></label><button id="connect" type="button">Connect</button></details></div>
   </header>
-  <nav class="tabs" role="tablist" aria-label="Song workflow">
-    <button id="tab-analyze" role="tab" aria-selected="true" aria-controls="panel-analyze" data-tab="analyze"><span>01</span> Analyze</button>
-    <button id="tab-jobs" role="tab" aria-selected="false" aria-controls="panel-jobs" data-tab="jobs" tabindex="-1"><span>02</span> Jobs <small id="jobCount"></small></button>
-    <button id="tab-review" role="tab" aria-selected="false" aria-controls="panel-review" data-tab="review" tabindex="-1"><span>03</span> Review</button>
-    <button id="tab-export" role="tab" aria-selected="false" aria-controls="panel-export" data-tab="export" tabindex="-1"><span>04</span> Export</button>
-  </nav>
+
   <main>
-    <section id="panel-analyze" class="panel" role="tabpanel" aria-labelledby="tab-analyze">
-      <div class="intro"><p class="eyebrow">START WITH A SONG</p><h2>Bring the audio.<br>Find the structure.</h2><p>Analyze beats, sections and lyrics, then listen and refine the result.</p></div>
-      <form id="analyzeForm" class="analyze-layout">
-        <div class="card source-card">
-          <h3>Audio or video</h3><label class="file-area" for="audioFile"><span class="file-icon" aria-hidden="true">♫</span><strong id="audioName">Choose a song</strong><span id="audioDetails">WAV, MP3, FLAC, M4A or video with audio</span><input id="audioFile" type="file" accept="audio/*,video/*,.wav,.mp3,.flac,.m4a,.ogg,.aac,.mp4,.mov,.mkv" required></label>
-          <p class="hint">Your media stays on this computer. Analysis continues if you close the browser.</p>
+    <section id="panel-song" class="panel" role="tabpanel" aria-labelledby="tab-song">
+      <div id="welcome" class="welcome" hidden>
+        <div>
+          <h2>Turn a song into a timing map</h2>
+          <p>This studio listens to your song and works out where the beats, sections and sung words fall. You then check the result against the audio and fix anything that is off. Everything stays on this computer.</p>
+        </div>
+        <ol class="how">
+          <li><strong>Choose a song.</strong> Pick an audio or video file and tell the studio whether it has lyrics.</li>
+          <li><strong>Wait for the analysis.</strong> It runs in the background, so you can close this page and come back.</li>
+          <li><strong>Review and fix.</strong> Play the song, watch the lyrics follow along, and correct any word that is early or late.</li>
+          <li><strong>Export.</strong> Download the corrected timing file for your video or animation.</li>
+        </ol>
+        <div class="row"><button id="welcomeStart" type="button" class="primary">Choose a song</button><button id="welcomeOpen" type="button">Open a saved project</button><button id="welcomeHide" type="button" class="quiet">Don’t show this again</button></div>
+      </div>
+
+      <form id="analyzeForm" class="song-form">
+        <div class="song-main">
+          <h2>Choose a song</h2>
+          <label class="file-area" for="audioFile"><span class="file-icon" aria-hidden="true">♫</span><strong id="audioName">Select an audio or video file</strong><span id="audioDetails">WAV, MP3, FLAC, M4A, or a video with sound</span><input id="audioFile" type="file" accept="audio/*,video/*,.wav,.mp3,.flac,.m4a,.ogg,.aac,.mp4,.mov,.mkv" required></label>
           <audio id="audioPreview" controls hidden></audio>
-          <label>Lyric workflow<select id="lyricsMode"><option value="auto">Transcribe automatically</option><option value="align">Align my supplied lyrics</option><option value="instrumental">Instrumental — no lyrics</option><option value="none">Music structure only</option></select></label>
-          <div id="lyricsInput" hidden><label>Lyrics<textarea id="lyricsText" rows="9" placeholder="Paste your lyrics. Keep line breaks and repeated choruses."></textarea></label><label class="secondary-file">Or load a lyrics text file<input id="lyricsFile" type="file" accept=".txt,text/plain"></label></div>
+          <fieldset class="choices"><legend>Does the song have lyrics?</legend>
+            <label class="choice"><input type="radio" name="lyricsMode" value="auto" checked><span><strong>Yes, find them for me</strong><small>The studio listens and writes down what it hears. Expect some mistakes in sung words.</small></span></label>
+            <label class="choice"><input type="radio" name="lyricsMode" value="align"><span><strong>Yes, and I have the lyrics</strong><small>Paste them in. This gives the most reliable words, because the studio only has to find when each one is sung.</small></span></label>
+            <label class="choice"><input type="radio" name="lyricsMode" value="instrumental"><span><strong>No, it is instrumental</strong><small>Only the beats and sections are analyzed.</small></span></label>
+            <label class="choice"><input type="radio" name="lyricsMode" value="none"><span><strong>Skip lyrics for now</strong><small>Only the beats and sections are analyzed. You can still import lyrics later.</small></span></label>
+          </fieldset>
+          <div id="lyricsInput" hidden><label>Your lyrics<textarea id="lyricsText" rows="9" placeholder="Paste the lyrics here. Keep the line breaks, and repeat a chorus each time it is sung."></textarea></label><label class="secondary-file">Or load a text file<input id="lyricsFile" type="file" accept=".txt,text/plain"></label></div>
         </div>
-        <div class="card settings-card">
-          <p class="eyebrow">ANALYSIS SETTINGS</p><h3>Choose the pass</h3>
-          <label>Language<select id="language"><option value="">Detect automatically</option><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="zh">Chinese</option></select></label>
-          <label>Music analysis<select id="musicModel"><option value="harmonix-all">Full ensemble</option><option value="harmonix-fold0">Single model · faster</option></select></label>
-          <label>Lyric model<select id="lyricModel"><option value="tiny">Tiny</option><option value="base" selected>Base</option><option value="small">Small</option><option value="medium">Medium</option></select></label>
-          <label class="check"><input id="offline" type="checkbox" checked> Use cached models only</label><p class="hint">Clear this to allow missing model downloads. CPU analysis runs one song at a time. Singing timings are estimates.</p>
-          <button id="startAnalysis" class="primary large" type="submit">Start analysis <span aria-hidden="true">→</span></button><p id="submissionState" class="hint" role="status">Choose a file to begin.</p>
-        </div>
+        <aside class="song-side">
+          <h3>How thorough should it be?</h3>
+          <fieldset class="choices compact"><legend class="sr-only">Analysis quality</legend>
+            <label class="choice"><input type="radio" name="preset" value="quick"><span><strong>Quick</strong><small>Fastest. Good for a first look.</small></span></label>
+            <label class="choice"><input type="radio" name="preset" value="balanced" checked><span><strong>Balanced</strong><small>Recommended for most songs.</small></span></label>
+            <label class="choice"><input type="radio" name="preset" value="thorough"><span><strong>Most accurate</strong><small>Slowest. Better with fast or crowded vocals.</small></span></label>
+          </fieldset>
+          <label>Language of the lyrics<select id="language"><option value="">Detect automatically</option><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="zh">Chinese</option></select></label>
+          <p id="languageHint" class="hint" hidden>Pick the language you are pasting lyrics in.</p>
+          <p id="modelState" class="model-state" role="status">Checking which models are on this computer…</p>
+          <details class="advanced"><summary>Advanced settings</summary>
+            <label>Music model<select id="musicModel"><option value="harmonix-all">Full set of models (more accurate)</option><option value="harmonix-fold0">One model (faster)</option></select></label>
+            <label>Lyric model<select id="lyricModel"><option value="tiny">Tiny (fastest)</option><option value="base">Base</option><option value="small">Small</option><option value="medium">Medium (slowest)</option></select></label>
+            <label class="check"><input id="offline" type="checkbox"> Use only models already on this computer</label>
+            <p class="hint">Turn this off to let the studio download a missing model. That needs an internet connection and can take several minutes the first time.</p>
+          </details>
+          <button id="startAnalysis" class="primary large" type="submit">Start analysis</button>
+          <p id="submissionState" class="hint" role="status">Choose a file to begin.</p>
+          <p class="hint">Analysis uses your computer’s processor and often takes a few times the length of the song. Sung words are estimates, which is why the next step lets you check them.</p>
+        </aside>
       </form>
     </section>
-    <section id="panel-jobs" class="panel" role="tabpanel" aria-labelledby="tab-jobs" hidden>
-      <div class="section-heading"><div><p class="eyebrow">ANALYSIS QUEUE</p><h2>Follow the work</h2><p class="hint">Progress updates automatically. Completed results open directly in Review.</p></div><button id="refreshJobs" type="button">Refresh jobs</button></div>
-      <div id="jobs" class="jobs-grid"></div><p id="emptyJobs" class="empty" hidden>No analysis jobs yet. Start with a song in Analyze.</p>
+
+    <section id="panel-progress" class="panel" role="tabpanel" aria-labelledby="tab-progress" hidden>
+      <div class="section-heading"><div><h2>Analysis progress</h2><p class="hint">This page updates by itself. Analysis keeps running if you close the browser. When a song finishes, open it in Review.</p></div><button id="refreshJobs" type="button">Refresh</button></div>
+      <div id="jobs" class="jobs-grid"></div>
+      <div id="emptyJobs" class="empty" hidden><p>No songs have been analyzed yet.</p><button type="button" class="primary" data-go="song">Choose a song</button></div>
     </section>
+
     <section id="panel-review" class="panel" role="tabpanel" aria-labelledby="tab-review" hidden>
-      <div class="section-heading"><div><p class="eyebrow">LISTEN &amp; REFINE</p><h2>Make the timing yours</h2></div><div class="row"><select id="projects" aria-label="Saved project"><option value="">Choose a project</option></select><button id="refresh" type="button">Refresh</button></div></div>
-      <p id="emptyProjects" class="empty" hidden>No saved projects yet. Start an analysis or import a result below.</p>
-      <details class="card compact"><summary>Import an existing analysis JSON</summary><form id="import"><label>Analysis file<input id="analysisFile" type="file" accept=".json,application/json"></label><details><summary>Or enter a file path</summary><label>Local JSON path<input id="analysisPath" placeholder="Optional local path"></label></details><button type="submit">Import result</button></form></details>
-      <section id="editor" class="card" hidden>
-        <div class="row spread"><div><h3 id="projectTitle">Song</h3><small id="revision"></small></div><button id="reload" type="button">Reload latest</button></div>
-        <div class="player">
-          <div class="row"><button id="play" type="button">Play</button><button id="pause" type="button">Pause</button><select id="track" aria-label="Audio track"><option value="mix">Mix</option><option value="vocals">Vocals</option></select><select id="rate" aria-label="Playback speed"><option value="1">1×</option><option value=".75">0.75×</option><option value=".5">0.5×</option></select><label class="check"><input id="metro" type="checkbox"> Metronome</label><span id="activeWords" aria-live="off"></span></div>
-          <div class="wave-wrap"><canvas id="waveform" width="1200" height="110" aria-label="Audio waveform"></canvas><div id="playhead"></div></div>
-          <input id="seek" type="range" min="0" max="1" step=".01" value="0" aria-label="Seek audio"><div class="row spread"><span id="clock">0:00</span><span id="duration">0:00</span></div>
-          <div class="row loop-controls"><label>Loop start<input id="loopStart" type="number" min="0" step=".01" value="0"></label><label>Loop end<input id="loopEnd" type="number" min="0" step=".01" value="5"></label><button id="setLoop" type="button">Loop region</button><button id="clearLoop" type="button">Clear loop</button></div>
+      <div class="picker">
+        <label class="inline">Project<select id="projects" aria-label="Saved project"><option value="">Choose a project</option></select></label>
+        <button id="refresh" type="button" class="quiet">Refresh list</button>
+        <details class="import"><summary>Import analysis file</summary><form id="import"><label>Analysis JSON<input id="analysisFile" type="file" accept=".json,application/json"></label><details><summary>Or enter a file path</summary><label>Local JSON path<input id="analysisPath" placeholder="Optional local path"></label></details><button type="submit">Import</button></form></details>
+      </div>
+      <div id="emptyProjects" class="empty" hidden><p>No saved projects yet.</p><p class="hint">Analyze a song first, or import an analysis file you already have.</p><button type="button" class="primary" data-go="song">Choose a song</button></div>
+
+      <div id="editor" class="editor" hidden>
+        <div class="stage">
+          <div class="transport">
+            <button id="play" type="button" class="play" aria-label="Play">▶ Play</button>
+            <span class="time"><span id="clock">0:00</span> / <span id="duration">0:00</span></span>
+            <label class="inline">Listen to<select id="track" aria-label="Audio track"><option value="mix">Full mix</option><option value="vocals">Vocals only</option></select></label>
+            <label class="inline">Speed<select id="rate" aria-label="Playback speed"><option value="1">Normal</option><option value=".75">0.75×</option><option value=".5">0.5×</option></select></label>
+            <label class="check"><input id="metro" type="checkbox"> Beat clicks</label>
+            <span class="spacer"></span>
+            <span id="saveState" class="save-state" role="status"></span>
+            <button id="undo" type="button" class="quiet" disabled>Undo</button><button id="redo" type="button" class="quiet" disabled>Redo</button>
+            <button id="reload" type="button" class="quiet" title="Load the newest saved version">Reload</button>
+            <button id="toExport" type="button" class="primary">Finish and export</button>
+          </div>
+          <div class="wave-wrap" id="waveWrap"><canvas id="waveform" width="1400" height="96" aria-label="Audio waveform. Click to move playback. Drag to loop a region."></canvas><div id="loopBand" hidden></div><div id="playhead"></div></div>
+          <div class="wave-foot">
+            <input id="seek" type="range" min="0" max="1" step=".01" value="0" aria-label="Playback position">
+            <span class="hint" id="waveHint">Click the waveform to jump. Drag across it to loop a region.</span>
+            <button id="clearLoop" type="button" class="quiet" hidden>Stop looping</button>
+          </div>
         </div>
-        <div class="columns"><section><h3>Words</h3><div class="filters"><input id="wordFilter" placeholder="Filter words" aria-label="Filter words"><select id="lineSelect" aria-label="Filter line"><option value="">All lines</option></select></div><div id="words" class="list"></div></section>
-          <section class="edit-forms"><h3>Edit selected word</h3><form id="wordForm"><label>Text<input id="wordText" required></label><div class="row"><label>Start (s)<input id="wordStart" type="number" min="0" step=".001"></label><label>End (s)<input id="wordEnd" type="number" min="0" step=".001"></label></div><button>Save word</button></form>
-          <h3>Beats</h3><form id="beatForm"><label>Beat<select id="beatSelect"></select></label><label>Time (s)<input id="beatTime" type="number" min="0" step=".001" required></label><button>Save beat</button></form>
-          <h3>Sections</h3><form id="sectionForm"><label>Section<select id="sectionSelect"></select></label><label>Label<input id="sectionLabel" required></label><div class="row"><label>Start (s)<input id="sectionStart" type="number" min="0" step=".001" required></label><label>End (s)<input id="sectionEnd" type="number" min="0" step=".001" required></label></div><button>Save section</button></form></section>
-        </div><details><summary>Review flags</summary><pre id="review"></pre></details>
-      </section>
+
+        <div class="workspace">
+          <section class="lyrics-pane" aria-label="Lyrics">
+            <div class="pane-head">
+              <h2>Lyrics <small id="projectMeta"></small></h2>
+              <input id="wordFilter" type="search" placeholder="Find a word" aria-label="Find a word">
+              <label class="check"><input id="follow" type="checkbox" checked> Follow playback</label>
+              <button id="jumpNow" type="button" hidden>Jump to now</button>
+            </div>
+            <p class="legend"><span class="key none">untimed</span><span class="key guess">guessed time</span><span class="key weak">low confidence</span><span>Click a word to select it and hear it.</span></p>
+            <div id="lyrics" class="lyrics-scroll" tabindex="0" aria-label="Lyrics by line"></div>
+          </section>
+
+          <aside class="side">
+            <div class="side-tabs" role="tablist" aria-label="Editing tools">
+              <button role="tab" aria-selected="true" data-side="word">Selected word</button>
+              <button role="tab" aria-selected="false" data-side="issues">Needs attention <small id="issueCount"></small></button>
+              <button role="tab" aria-selected="false" data-side="grid">Beats and sections</button>
+            </div>
+
+            <div class="side-panel" data-side-panel="word">
+              <p id="wordEmpty" class="hint">Select a word in the lyrics to change its text or timing.</p>
+              <form id="wordForm" hidden>
+                <div class="word-head"><strong id="wordTitle"></strong><span id="wordBadge" class="badge"></span><button id="clearSelection" type="button" class="quiet" title="Deselect this word (Esc). The playhead stays where it is.">Clear selection</button></div>
+                <div class="row wrap"><button id="playWord" type="button">Play this word</button><button id="loopLine" type="button">Loop this line</button><span class="spacer"></span><button id="prevIssueWord" type="button" class="quiet">Previous issue</button><button id="nextIssueWord" type="button" class="quiet">Next issue</button></div>
+                <div id="guessNote" class="note guess" hidden><p>This time is a guess. Play it. If it sounds right, approve it. Otherwise change it and save.</p><div class="row wrap"><button id="approveWord" type="button">Approve this time</button><button id="approveNext" type="button">Approve and go to next</button></div></div>
+                <label>Text<input id="wordText" required></label>
+                <div class="time-field"><label>Starts at (seconds)<input id="wordStart" type="number" min="0" step=".001"></label><div class="nudges"><button type="button" data-nudge="wordStart" data-by="-0.05">−50</button><button type="button" data-nudge="wordStart" data-by="-0.01">−10</button><button type="button" data-nudge="wordStart" data-by="0.01">+10</button><button type="button" data-nudge="wordStart" data-by="0.05">+50</button><button type="button" data-playhead="wordStart">Use playhead</button></div></div>
+                <div class="time-field"><label>Ends at (seconds)<input id="wordEnd" type="number" min="0" step=".001"></label><div class="nudges"><button type="button" data-nudge="wordEnd" data-by="-0.05">−50</button><button type="button" data-nudge="wordEnd" data-by="-0.01">−10</button><button type="button" data-nudge="wordEnd" data-by="0.01">+10</button><button type="button" data-nudge="wordEnd" data-by="0.05">+50</button><button type="button" data-playhead="wordEnd">Use playhead</button></div></div>
+                <p class="hint">Nudge buttons move by milliseconds. Play the word to check your change before saving.</p>
+                <div class="row wrap save-row"><button id="saveWord" class="primary">Save word</button><button id="saveNext" type="button">Save and go to next issue</button></div>
+              </form>
+            </div>
+
+            <div class="side-panel" data-side-panel="issues" hidden>
+              <details class="guess-panel" id="guessPanel" open>
+                <summary>Guess missing times</summary>
+                <p class="hint">Some words could not be timed. When a word sits between two timed words, its time can be estimated from them. Guesses are marked and can be approved or changed.</p>
+                <label class="check"><input id="guessClose" type="checkbox"> Guess close untimed lyrics</label>
+                <p class="hint indent">A single untimed word between two timed words is placed in the middle of the gap.</p>
+                <div id="guessMore" hidden>
+                  <label class="check"><input id="guessSuccessive" type="checkbox"> Guess successive untimed lyrics</label>
+                  <p class="hint indent">A run of untimed words is spread evenly across the gap between its timed neighbors.</p>
+                  <label class="check"><input id="guessSnap" type="checkbox"> Snap guesses to the nearest beat</label>
+                  <label class="inline">Skip gaps longer than<input id="guessGap" type="number" min="0.5" max="60" step=".5" value="4"> seconds</label>
+                  <fieldset class="scope"><legend>Where to guess</legend>
+                    <label class="check"><input type="radio" name="guessScope" value="song" checked> Whole song</label>
+                    <label class="check"><input type="radio" name="guessScope" value="line"> The selected word’s line</label>
+                    <label class="check"><input type="radio" name="guessScope" value="section"> The selected word’s section</label>
+                  </fieldset>
+                  <p id="guessPreview" class="preview" role="status"></p>
+                  <button id="applyGuess" type="button" class="primary" disabled>Apply guesses</button>
+                </div>
+              </details>
+              <div class="issue-head"><div id="issueChips" class="chips" role="group" aria-label="Filter"></div><div class="row"><button id="prevIssue" type="button" class="quiet">Previous</button><button id="nextIssue" type="button" class="quiet">Next</button><button id="approveAll" type="button" class="quiet" hidden>Approve all guesses</button></div></div>
+              <ul id="issueList" class="issue-list"></ul>
+              <p id="issueEmpty" class="empty small" hidden>Nothing needs attention. Every word has a reliable time.</p>
+              <p id="issueNotes" class="hint"></p>
+            </div>
+
+            <div class="side-panel" data-side-panel="grid" hidden>
+              <section>
+                <h3>Beat</h3>
+                <p class="hint">Move the playhead near a beat, then adjust it. Use the click track to hear the grid.</p>
+                <p id="beatLabel" class="strong"></p>
+                <div class="row wrap"><button id="prevBeat" type="button">Previous beat</button><button id="nearBeat" type="button">Beat at playhead</button><button id="nextBeat" type="button">Next beat</button></div>
+                <form id="beatForm"><div class="time-field"><label>Beat time (seconds)<input id="beatTime" type="number" min="0" step=".001" required></label><div class="nudges"><button type="button" data-nudge="beatTime" data-by="-0.01">−10</button><button type="button" data-nudge="beatTime" data-by="0.01">+10</button><button type="button" data-playhead="beatTime">Use playhead</button></div></div><button class="primary">Save beat</button></form>
+              </section>
+              <section>
+                <h3>Sections</h3>
+                <ul id="sectionList" class="section-list"></ul>
+                <form id="sectionForm"><label>Label<input id="sectionLabel" required></label>
+                  <div class="time-field"><label>Starts at (seconds)<input id="sectionStart" type="number" min="0" step=".001" required></label><div class="nudges"><button type="button" data-playhead="sectionStart">Use playhead</button></div></div>
+                  <div class="time-field"><label>Ends at (seconds)<input id="sectionEnd" type="number" min="0" step=".001" required></label><div class="nudges"><button type="button" data-playhead="sectionEnd">Use playhead</button></div></div>
+                  <button class="primary">Save section</button></form>
+              </section>
+            </div>
+          </aside>
+        </div>
+      </div>
     </section>
+
     <section id="panel-export" class="panel" role="tabpanel" aria-labelledby="tab-export" hidden>
-      <div class="intro"><p class="eyebrow">READY FOR PRODUCTION</p><h2>Take the map with you.</h2><p>Download the selected project's latest corrected analysis.</p></div>
-      <div class="card export-card"><h3 id="exportTitle">Choose a project in Review</h3><p id="exportInfo" class="hint">Word timings, beats and sections share the original audio timebase.</p><button id="exportJson" type="button" disabled>Download analysis JSON</button></div>
+      <div class="export-layout">
+        <div>
+          <h2 id="exportTitle">Export</h2>
+          <p id="exportInfo" class="hint">Open a project in Review first.</p>
+          <div id="exportSummary" class="summary" hidden></div>
+          <div id="exportWarning" class="note guess" hidden><p id="exportWarningText"></p><button id="exportReview" type="button">Go back and review</button></div>
+          <div class="row wrap"><button id="exportJson" type="button" class="primary" disabled>Download corrected analysis</button><button id="exportBack" type="button">Back to review</button></div>
+          <p class="hint">The file is a JSON document. Every time is in seconds from the very start of the original audio, and it includes all of the corrections you saved.</p>
+        </div>
+      </div>
     </section>
   </main>
+
+  <dialog id="helpDialog" aria-labelledby="helpTitle">
+    <form method="dialog"><h2 id="helpTitle">How the studio works</h2>
+      <h3>The four steps</h3>
+      <p>Choose a song, wait for the analysis, review and fix the timing, then export. The bar at the top shows where you are; you can move between steps at any time.</p>
+      <h3>Reviewing</h3>
+      <p>The song and its waveform stay at the top while you work. Lyrics scroll along as the song plays. Turn off <em>Follow playback</em>, or just scroll yourself, to look around. Click a word to select it, then change its text or timing on the right.</p>
+      <p>Words with a dashed red underline have no time. Amber words are guesses. Dotted grey words were timed with low confidence. The <em>Needs attention</em> tab lists them and can guess times for untimed words.</p>
+      <h3>Keyboard shortcuts</h3>
+      <dl class="keys"><dt>Space</dt><dd>Play or pause</dd><dt>N / P</dt><dd>Next / previous issue</dd><dt>L</dt><dd>Loop the selected word’s line</dd><dt>F</dt><dd>Turn follow playback on or off</dd><dt>Ctrl + Enter</dt><dd>Save the selected word</dd><dt>Esc</dt><dd>Clear the selected word (the playhead stays put)</dd><dt>?</dt><dd>Open this help</dd></dl>
+      <p class="hint">Shortcuts pause while you are typing in a field.</p>
+      <div class="row"><button class="primary" value="close">Got it</button><button type="button" id="showWelcome">Show the welcome again</button></div>
+    </form>
+  </dialog>
   <output id="status" role="status" aria-live="polite">Connecting to the local service…</output>
   <script type="module" src="/app/app.js"></script>
 </body></html>

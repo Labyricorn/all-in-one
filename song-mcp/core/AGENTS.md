@@ -12,6 +12,7 @@ Shared request preparation and durable editable song projects, independent of an
 - Transaction IDs are mandatory; identical retries return their original revision, differing payloads are rejected.
 - Raw imported JSON is immutable. Preserve normalization provenance; user timings may overlap.
 - Only original-origin, full-duration PCM playback files enter project-owned artifacts. Validate hashes before serving them.
+- Guessed word times (`method: "guessed"` on `set_word_interval`) are stored as `timing_status: "guessed"` with `guessed` provenance and a review item until approved; only word intervals can be guessed. Approval or any manual edit makes them `user_set`.
 - Undo/redo restore snapshots as new revisions. Proposals never change the selected result until accepted.
 - Reject unknown future database/project versions. Runtime data is outside tracked source.
 

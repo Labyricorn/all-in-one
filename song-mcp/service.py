@@ -23,6 +23,7 @@ from starlette.concurrency import run_in_threadpool
 from common import ROOT, write_json, probe_media
 from core.projects import Conflict
 from server import mcp, project_store, submit_song, get_job, list_jobs, open_project, cancel_job
+from model_status import model_status
 
 API_VERSION = 1
 
@@ -64,6 +65,9 @@ def create_app(token):
 
     async def health(request):
         return JSONResponse({'name': 'mgmv-local', 'api_version': API_VERSION})
+
+    async def models(request):
+        return JSONResponse(await run_in_threadpool(model_status))
 
     async def upload_media(request):
         """Retain browser-selected media outside source for detached workers."""
@@ -151,7 +155,8 @@ def create_app(token):
     async def editor(request):
         name = request.url.path.rsplit('/', 1)[-1]
         files = {'app': ('app.html', 'text/html'), 'app.js': ('src/app.js', 'text/javascript'),
-                 'app.css': ('src/app.css', 'text/css'), 'playback.mjs': ('src/playback.mjs', 'text/javascript')}
+                 'app.css': ('src/app.css', 'text/css'), 'playback.mjs': ('src/playback.mjs', 'text/javascript'),
+                 'guess.mjs': ('src/guess.mjs', 'text/javascript')}
         filename, media_type = files[name]
         return FileResponse(Path(__file__).resolve().parents[1] / 'desktop' / filename, media_type=media_type)
 
@@ -182,6 +187,7 @@ def create_app(token):
 
     app = Starlette(routes=[Route('/health', health), Route('/debug', debug), Route('/debug/playback.mjs', debug), Route('/app', editor), Route('/app/{asset}', editor), Route('/api/v1/projects', dispatch, methods=['GET', 'POST']),
                             Route('/api/v1/media', upload_media, methods=['POST']),
+                            Route('/api/v1/models', models),
                             Route('/api/v1/jobs', dispatch, methods=['GET', 'POST']),
                             Route('/api/v1/jobs/{job_id}', dispatch),
                             Route('/api/v1/jobs/{job_id}/cancel', dispatch, methods=['POST']),
@@ -202,7 +208,7 @@ def create_app(token):
                 authorized = secrets.compare_digest(headers.get(b'authorization', b'').decode(), 'Bearer ' + token)
                 if host.split(':')[0] not in ('127.0.0.1', 'localhost') or (origin and origin not in allowed):
                     await JSONResponse({'error': 'Local host/origin required.'}, status_code=403)(scope, receive, send); return
-                if scope['path'] not in ('/health', '/debug', '/debug/playback.mjs', '/app', '/app/app.js', '/app/app.css', '/app/playback.mjs') and not authorized:
+                if scope['path'] not in ('/health', '/debug', '/debug/playback.mjs', '/app', '/app/app.js', '/app/app.css', '/app/playback.mjs', '/app/guess.mjs') and not authorized:
                     await JSONResponse({'error': 'Use the local discovery bearer token.'}, status_code=401)(scope, receive, send); return
             await self.application(scope, receive, send)
     return LocalAccess(app)

@@ -169,3 +169,17 @@ def test_cancellation_retains_diagnostics_and_releases_shared_slot(service):
         assert (directory / 'worker.log').read_text() == 'retained fixture diagnostics'
     finally:
         if worker.poll() is None: worker.terminate(); worker.wait(timeout=5)
+
+
+def test_model_status_endpoint_requires_token_and_serves_new_module(service):
+    record, tmp_path, process, env = service
+    request = urllib.request.Request(record['url'] + '/api/v1/models')
+    with pytest.raises(urllib.error.HTTPError) as denied:
+        urllib.request.urlopen(request, timeout=5)
+    assert denied.value.code == 401
+    request.add_header('Authorization', 'Bearer ' + record['token'])
+    with urllib.request.urlopen(request, timeout=10) as response:
+        status = json.loads(response.read())
+    assert set(status) == {'lyric_models', 'alignment_model', 'music_models', 'offline_ready'}
+    with urllib.request.urlopen(record['url'] + '/app/guess.mjs', timeout=5) as response:
+        assert b'planGuesses' in response.read()

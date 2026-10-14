@@ -37,7 +37,9 @@
           "shift": {"type": "number"},
           "morph_to": {"type": "string"},
           "morph_at": {"type": "number"},
-          "value": {"type": "object"}
+          "value": {"type": "object"},
+          "method": {"enum": ["guessed"]},
+          "basis": {"enum": ["midpoint", "even_spread"]}
         },
         "additionalProperties": false
       }

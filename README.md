@@ -1,7 +1,7 @@
-# All-In-One Music Structure Analyzer — maintained Labyricorn fork
+# Two-In-One Music and Lyric Analysis Studio
 
 This fork continues [Taejun Kim's original All-In-One analyzer](https://github.com/mir-aidj/all-in-one)
-and adds **Song Studio**, a local browser application for analyzing audio,
+and adds **Two-In-One**, a local browser application for analyzing audio,
 following jobs, reviewing playback and correcting song timelines. The full CLI
 and MCP interfaces share the same analysis and project backend: automatic lyrics,
 supplied-text alignment, estimated word/phrase timing, combined song maps,
@@ -10,7 +10,7 @@ Windows Demucs compatibility fixes and a NATTEN build patch are included.
 
 **Start with [SETUP.md](SETUP.md)** to install the two isolated Python environments
 and run the full song/lyrics workflow. Once installed, double-click
-`song-service.cmd` to open Song Studio, or use the terminal commands below.
+`song-service.cmd` to open Two-In-One, or use the terminal commands below.
 
 ## Full song analysis with lyrics
 
@@ -27,7 +27,7 @@ word CSV and a report. Add `--offline` to use cached models only, `-v` for a
 timeline PDF or `-s` for a timing-cue WAV. These terminal commands work with the
 browser and service closed. `analyze-music.cmd` is the **structure-only** CLI.
 
-## Song Studio
+## Two-In-One Studio
 
 Start the local application from PowerShell, or double-click its launcher:
 
@@ -41,20 +41,46 @@ running while using the application; use `--no-browser` for console-only startup
 
 | Tab | Workflow |
 | --- | --- |
-| **Analyze** | Choose audio/video with a file picker, preview it, select automatic transcription or supplied lyrics, choose language/models and start analysis. |
-| **Jobs** | Follow actual processing stages, cancel active jobs, inspect errors and open completed or partial results in Review. |
-| **Review** | Open saved projects or import analysis JSON. Inspect waveform, sections and downbeats; play mix/vocals, seek, loop, slow playback and audition a metronome. Save word text/timing, beat-time and section corrections. |
-| **Export** | Download the selected project's latest corrected analysis JSON. |
+| **1 Choose a song** | Pick audio/video, say whether it has lyrics (and paste them if you have them), choose Quick/Balanced/Most accurate, and start. The studio tells you whether the models are already on this computer. |
+| **2 Analysis** | Follow each stage in plain language, cancel, read failure details and open finished or partial results in Review. |
+| **3 Review and fix** | A pinned player and waveform sit above lyrics that scroll along with playback. Click a word to hear it and fix its text or timing; work through the Needs attention list; optionally guess missing times; adjust beats and sections; undo and redo. |
+| **4 Export** | See what is still untimed or guessed, then download the corrected analysis JSON. |
+
+In **Review and fix**, the lyrics follow the song while it plays; scrolling by hand
+pauses that and shows a **Jump to now** button. Clicking a word selects it, plays it
+and moves the playhead there (an untimed word jumps to its nearest timed neighbor, and
+an active loop that doesn't include the click is cleared). **Clear selection**, Esc or a
+click on empty lyric space deselects without moving the playhead. Press **?** in the
+studio for the full list of keyboard shortcuts.
 
 Saves create durable project revisions and reject stale concurrent edits.
 Completed jobs reuse cached audio when opened for review. Accepted analysis jobs
 continue after browser or service disconnects. Media, uploaded copies, projects,
 models and caches stay in local runtime directories outside source control.
 
-Singing timings are estimates and may need review. The current browser application
-loads audio into memory; slower playback changes pitch. Native Tauri packaging,
-waveform zoom, line/event/grid editing and undo/redo controls are future work.
-See the [Song Studio guide](desktop/README.md) for controls and storage details.
+Singing timings are estimates and may need review. Untimed words can optionally be
+guessed from their timed neighbors; guesses are clearly marked until you approve them.
+The current browser application loads audio into memory; slower playback changes pitch.
+Native Tauri packaging, waveform zoom, line/event/grid forms and autosave are future work.
+See the [studio guide](desktop/README.md) for controls and storage details.
+
+### Trying the timing guesses
+
+Open a project in **Review and fix**, expand **Guess missing times**, turn on
+*Guess close untimed lyrics* (and optionally *Guess successive untimed lyrics* and
+*Snap guesses to the nearest beat*), check the preview and apply. Guessed words show
+with a dotted amber underline until you approve them; undo reverses the whole batch.
+
+### Running the tests
+
+```powershell
+node --test desktop/tests/*.test.mjs
+.\song-mcp\.venv\Scripts\python.exe -m pytest song-mcp/tests -q
+```
+
+The Node tests cover the playback clock and the guess planner. The Python tests cover
+the project core, model-readiness check and service API. Browser behavior is checked
+by hand or with Playwright against a copy of a real project.
 
 ## Headless projects and connected MCP
 

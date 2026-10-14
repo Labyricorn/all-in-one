@@ -1,5 +1,49 @@
 # Development log
 
+## 2026-10-14 — Repository links point to Labyricorn/two-in-one
+
+- Updated AGENTS.md and pyproject.toml URLs to the planned new repository name
+  (github.com/Labyricorn/two-in-one) ahead of the user renaming the GitHub repo after the
+  push. The upstream link to mir-aidj/all-in-one is unchanged. The local `origin` remote
+  still needs `git remote set-url` after the rename. No commits were pushed.
+
+## 2026-10-14 — README: review workflow and testing notes
+
+- Main README now describes follow playback, click-to-seek, Clear selection/Esc, how to
+  try timing guesses, and how to run the Node and Python tests. No commits were pushed.
+
+## 2026-10-14 — Fix: clicking words after an edit did not move the playhead
+
+- A loop left over from "Loop this line" pulled the playhead back inside it, and untimed
+  words had no start to seek to. Word and issue clicks now go through one routine that
+  releases an outside loop and seeks untimed words to their nearest timed neighbor.
+- Added Clear selection, Esc and empty-space click to deselect. Verified in headless
+  Chromium (loop release, untimed seek, deselect). No commits were pushed.
+
+## 2026-10-14 — Studio workflow redesign, lyric follow and timing guesses
+
+- Rebuilt the browser studio around four steps (Choose a song, Analysis, Review
+  and fix, Export) with a first-run welcome, Help dialog, presets, plain-language
+  stages and a model-readiness note. Added `GET /api/v1/models` (`model_status.py`).
+- Review is now one workspace: pinned player/waveform, lyrics that follow playback
+  (manual scroll pauses it; Jump to now), selected-word editor, Needs attention list,
+  beats/sections tools, undo/redo and keyboard shortcuts.
+- Added optional timing guesses (`src/guess.mjs`): close single words at the gap
+  midpoint, successive runs spread evenly, optional beat snap, gap limit (default 4 s),
+  scoped to song/line/section. Stored as `method: "guessed"` / `timing_status: "guessed"`
+  with review item `guessed_word_timing`; approval or editing makes them user-set.
+- Tests: 10 new Node guess tests, new Python project/model-status/service tests; verified
+  in headless Chromium against a copy of the "My Own Song" project. One pre-existing
+  environment-only failure (missing faster_whisper in the test VM). No commits were pushed.
+
+## 2026-10-13 — Two-In-One project branding
+
+- User named the project Two-In-One Music and Lyric Analysis Studio. Updated the
+  main README, browser title/header, studio/setup/backend documentation, MCP
+  display name and attribution to use the new name.
+- Preserved the maintained fork's repository, allin1 Python package, launchers,
+  runtime paths and protocol identifiers so existing installations remain usable.
+
 ## 2026-10-13 — Main README documents Song Studio
 
 - Updated the repository landing page with full song/lyrics CLI commands,

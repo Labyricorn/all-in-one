@@ -84,6 +84,9 @@ def migrate(raw):
     return data
 
 
+GUESS_BASES = ('midpoint', 'even_spread')
+
+
 def refresh(data):
     duration = data['duration_seconds']
     words = data['lyrics']['words']
@@ -147,6 +150,8 @@ def refresh(data):
     for i, word in enumerate(words):
         if word['start'] is None:
             issues.append({'code': 'missing_word_timing', 'id': word['id']})
+        elif word.get('timing_status') == 'guessed':
+            issues.append({'code': 'guessed_word_timing', 'id': word['id']})
         elif word.get('model_score') is not None and word['model_score'] < .5 and word.get('provenance', {}).get('method') != 'user_set':
             issues.append({'code': 'weak_word_timing', 'id': word['id'], 'model_score': word['model_score']})
         if i and word['start'] is not None and words[i - 1]['end'] is not None and word['start'] < words[i - 1]['end']:
@@ -255,6 +260,10 @@ def apply_operations(data, operations, transaction='preview'):
             elif op in ('set_word_interval', 'set_line_interval', 'set_section_interval', 'set_event_interval'):
                 row.update(start=operation['start'], end=operation['end'])
                 if kind == 'line': row['bounds_user_set'] = True
+                if operation.get('method') is not None and not (op == 'set_word_interval' and operation['method'] == 'guessed'):
+                    raise ValueError('Only word intervals may be marked as guessed.')
+                if operation.get('basis') is not None and operation['basis'] not in GUESS_BASES:
+                    raise ValueError('Unknown guess basis.')
             elif op == 'set_beat':
                 row['time'] = operation['time']
                 if 'position_in_bar' in operation: row['position_in_bar'] = operation['position_in_bar']
@@ -267,8 +276,10 @@ def apply_operations(data, operations, transaction='preview'):
                 raise ValueError('Unsupported correction operation: ' + op)
         if kind in ('word', 'line') and not isinstance(row.get('text'), str):
             raise ValueError('Lyric text must be a string.')
-        if kind == 'word': row['timing_status'] = 'user_set' if row['start'] is not None else 'missing'
-        row['provenance'] = {'method': 'user_set', 'review_state': 'reviewed'}
+        guessed = op == 'set_word_interval' and operation.get('method') == 'guessed' and row['start'] is not None
+        if kind == 'word': row['timing_status'] = 'guessed' if guessed else 'user_set' if row['start'] is not None else 'missing'
+        row['provenance'] = ({'method': 'guessed', 'review_state': 'needs_review', 'basis': operation.get('basis', 'midpoint')}
+                             if guessed else {'method': 'user_set', 'review_state': 'reviewed'})
     refresh(data)
 
 

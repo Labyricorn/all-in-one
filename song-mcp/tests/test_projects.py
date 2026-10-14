@@ -183,3 +183,37 @@ def test_project_cli_uses_same_store_and_exports_identical_revision(imported, tm
     assert response.returncode == 0
     store.export(key, tmp_path / 'core.json')
     assert exported.read_bytes() == (tmp_path / 'core.json').read_bytes()
+
+
+def test_guessed_word_timing_is_marked_reviewable_and_approval_makes_it_user_set(imported):
+    store, project = imported; key = project['project_id']; data = project['analysis']
+    line = data['lyrics']['phrases'][0]['id']; first = data['lyrics']['words'][0]['id']
+    store.apply(key, correction(project, [{'op': 'insert_word', 'id': 'w-guess', 'line_id': line, 'after_id': first, 'value': {'text': 'my'}}], 'insert'))
+    project = store.read(key)
+    assert any(r['code'] == 'missing_word_timing' and r['id'] == 'w-guess' for r in project['analysis']['review_items'])
+    store.apply(key, correction(project, [{'op': 'set_word_interval', 'word_id': 'w-guess', 'start': 1.2, 'end': 1.7, 'method': 'guessed', 'basis': 'even_spread'}], 'guess'))
+    project = store.read(key); word = next(w for w in project['analysis']['lyrics']['words'] if w['id'] == 'w-guess')
+    assert word['timing_status'] == 'guessed'
+    assert word['provenance'] == {'method': 'guessed', 'review_state': 'needs_review', 'basis': 'even_spread'}
+    assert any(r['code'] == 'guessed_word_timing' and r['id'] == 'w-guess' for r in project['analysis']['review_items'])
+    assert not any(r['code'] == 'missing_word_timing' and r['id'] == 'w-guess' for r in project['analysis']['review_items'])
+    # Approval is an ordinary tag edit: the time is kept and is no longer a guess.
+    store.apply(key, correction(project, [{'op': 'set_tags', 'kind': 'word', 'id': 'w-guess', 'value': {'review_state': 'reviewed'}}], 'approve'))
+    approved = next(w for w in store.read(key)['analysis']['lyrics']['words'] if w['id'] == 'w-guess')
+    assert (approved['start'], approved['end'], approved['timing_status']) == (1.2, 1.7, 'user_set')
+    assert approved['provenance'] == {'method': 'user_set', 'review_state': 'reviewed'}
+    assert not any(r['code'] == 'guessed_word_timing' for r in store.read(key)['analysis']['review_items'])
+
+
+def test_manual_edit_of_a_guess_is_user_set_and_other_entities_cannot_be_guessed(imported):
+    store, project = imported; key = project['project_id']; data = project['analysis']
+    word = data['lyrics']['words'][0]['id']
+    store.apply(key, correction(project, [{'op': 'set_word_interval', 'word_id': word, 'start': 1., 'end': 1.5, 'method': 'guessed'}], 'g'))
+    project = store.read(key)
+    assert next(w for w in project['analysis']['lyrics']['words'] if w['id'] == word)['timing_status'] == 'guessed'
+    store.apply(key, correction(project, [{'op': 'set_word_interval', 'word_id': word, 'start': 1., 'end': 1.6}], 'manual'))
+    project = store.read(key)
+    assert next(w for w in project['analysis']['lyrics']['words'] if w['id'] == word)['timing_status'] == 'user_set'
+    section = data['sections'][0]['id']
+    with pytest.raises(ValueError):
+        store.apply(key, correction(project, [{'op': 'set_section_interval', 'section_id': section, 'start': 0., 'end': 9., 'method': 'guessed'}], 'bad'))
