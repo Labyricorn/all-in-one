@@ -1,5 +1,14 @@
 # Development log
 
+## 2026-10-13 — Main README documents Song Studio
+
+- Updated the repository landing page with full song/lyrics CLI commands,
+  automatic browser startup, Analyze/Jobs/Review/Export workflow, playback and
+  revision behavior, headless projects and connected MCP documentation links.
+- Described current browser limitations and future native/editor work. Preserved
+  the upstream installation/API guide, original license and research citation.
+  User explicitly authorized committing and pushing this documentation update.
+
 ## 2026-10-13 — Authorized Song Studio publication
 
 - User explicitly requested commit and push of the current implementation to

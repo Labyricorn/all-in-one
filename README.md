@@ -1,16 +1,82 @@
 # All-In-One Music Structure Analyzer — maintained Labyricorn fork
 
 This fork continues [Taejun Kim's original All-In-One analyzer](https://github.com/mir-aidj/all-in-one)
-and adds a local song-analysis CLI and MCP server: automatic lyrics, supplied-text
-alignment, estimated word/phrase timing, combined song maps, persistent jobs,
-offline operation and reviewable JSON/TXT/CSV reports. Windows Demucs compatibility
-fixes and a NATTEN build patch are included.
+and adds **Song Studio**, a local browser application for analyzing audio,
+following jobs, reviewing playback and correcting song timelines. The full CLI
+and MCP interfaces share the same analysis and project backend: automatic lyrics,
+supplied-text alignment, estimated word/phrase timing, combined song maps,
+persistent jobs, versioned corrections and offline cached-model operation.
+Windows Demucs compatibility fixes and a NATTEN build patch are included.
 
-**Start with [SETUP.md](SETUP.md)** for the full song/lyrics workflow and two isolated
-environments. `analyze-song.cmd` runs music plus lyrics; `analyze-music.cmd` runs
-music structure only. The companion source is in `song-mcp/`; it is run from this
-checkout and is not bundled into the `allin1` wheel. The upstream Python API and
-package name remain `allin1`. See [ATTRIBUTION.md](ATTRIBUTION.md) for provenance.
+**Start with [SETUP.md](SETUP.md)** to install the two isolated Python environments
+and run the full song/lyrics workflow. Once installed, double-click
+`song-service.cmd` to open Song Studio, or use the terminal commands below.
+
+## Full song analysis with lyrics
+
+From PowerShell in the fork checkout:
+
+```powershell
+.\analyze-song.cmd 'C:\Music\song.mp3' --language en -o '.\song-results'
+.\analyze-song.cmd 'C:\Music\song.mp3' --lyrics-file 'C:\Music\lyrics.txt' --language en -o '.\song-results'
+```
+
+The first command transcribes automatically; the second aligns your supplied
+UTF-8 lyric text. Results include combined analysis/song-map JSON, lyric files,
+word CSV and a report. Add `--offline` to use cached models only, `-v` for a
+timeline PDF or `-s` for a timing-cue WAV. These terminal commands work with the
+browser and service closed. `analyze-music.cmd` is the **structure-only** CLI.
+
+## Song Studio
+
+Start the local application from PowerShell, or double-click its launcher:
+
+```powershell
+.\song-service.cmd
+```
+
+The launcher opens your browser, connects it automatically and prints a direct
+UI link. An existing compatible service is reused. Keep the service console
+running while using the application; use `--no-browser` for console-only startup.
+
+| Tab | Workflow |
+| --- | --- |
+| **Analyze** | Choose audio/video with a file picker, preview it, select automatic transcription or supplied lyrics, choose language/models and start analysis. |
+| **Jobs** | Follow actual processing stages, cancel active jobs, inspect errors and open completed or partial results in Review. |
+| **Review** | Open saved projects or import analysis JSON. Inspect waveform, sections and downbeats; play mix/vocals, seek, loop, slow playback and audition a metronome. Save word text/timing, beat-time and section corrections. |
+| **Export** | Download the selected project's latest corrected analysis JSON. |
+
+Saves create durable project revisions and reject stale concurrent edits.
+Completed jobs reuse cached audio when opened for review. Accepted analysis jobs
+continue after browser or service disconnects. Media, uploaded copies, projects,
+models and caches stay in local runtime directories outside source control.
+
+Singing timings are estimates and may need review. The current browser application
+loads audio into memory; slower playback changes pitch. Native Tauri packaging,
+waveform zoom, line/event/grid editing and undo/redo controls are future work.
+See the [Song Studio guide](desktop/README.md) for controls and storage details.
+
+## Headless projects and connected MCP
+
+For terminal project import, revision history, corrections and export:
+
+```powershell
+.\song-project.cmd --help
+.\song-project.cmd list
+```
+
+Connected MCP chat actions use the same durable jobs and projects. The existing
+stdio MCP server works independently; the running local service also provides
+authenticated Streamable HTTP MCP for project reads, correction proposals,
+explicit applications and exports. See [backend and MCP setup](song-mcp/BACKEND.md)
+for connection configuration and the versioned API.
+
+## Source and upstream guide
+
+The maintained application sources live in `desktop/` and `song-mcp/`, with
+repository launchers selecting the installed environments. The companion is run
+from this checkout and is not bundled into the `allin1` wheel. The upstream Python
+API and package name remain `allin1`. See [ATTRIBUTION.md](ATTRIBUTION.md) for provenance.
 
 The original MIT copyright/license and research citation below are retained.
 The following upstream guide describes the underlying structure analyzer.
