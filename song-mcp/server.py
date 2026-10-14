@@ -21,7 +21,7 @@ from core.projects import ProjectStore
 def project_store():
     return ProjectStore(os.environ.get('MGMV_PROJECT_ROOT', str(ROOT / 'song-projects')))
 
-mcp = MCPServer('MGMV Song Analysis', version='1.0', instructions='Submit local audio/video with submit_song; poll get_job until complete or partial; retrieve get_song_map and paged get_analysis. All timings are seconds from original decoded audio start. Lyrics and singing word timings are estimates: review them, retain null timings, and do not invent lyrics or emotional interpretations. You author the motion-graphics video plan; this server does not render it.')
+mcp = MCPServer('Two-In-One Music and Lyric Analysis Studio', version='1.0', instructions='Submit local audio/video with submit_song; poll get_job until complete or partial; retrieve get_song_map and paged get_analysis. All timings are seconds from original decoded audio start. Lyrics and singing word timings are estimates: review them, retain null timings, and do not invent lyrics or emotional interpretations. You author the motion-graphics video plan; this server does not render it.')
 
 
 def tool_errors(function):
@@ -38,7 +38,7 @@ def tool_errors(function):
 @tool_errors
 def server_info() -> dict[str, Any]:
     """Check installed backends and supported workflow without downloading models."""
-    return {'name': 'MGMV Song Analysis', 'version': '1.0', 'device': 'cpu', 'job_directory': str(JOBS), 'analyzer_present': ANALYZER.is_file(), 'lyric_engine': 'faster-whisper ASR + WhisperX CTC alignment', 'lyric_models': ['tiny', 'base', 'small', 'medium'], 'default_lyric_model': 'base', 'modes': ['auto', 'align', 'instrumental', 'none'], 'network': 'Public model weights download on first use; song media and lyrics remain local.', 'workflow': ['submit_song', 'get_job', 'get_song_map', 'get_analysis']}
+    return {'name': 'Two-In-One Music and Lyric Analysis Studio', 'version': '1.0', 'device': 'cpu', 'job_directory': str(JOBS), 'analyzer_present': ANALYZER.is_file(), 'lyric_engine': 'faster-whisper ASR + WhisperX CTC alignment', 'lyric_models': ['tiny', 'base', 'small', 'medium'], 'default_lyric_model': 'base', 'modes': ['auto', 'align', 'instrumental', 'none'], 'network': 'Public model weights download on first use; song media and lyrics remain local.', 'workflow': ['submit_song', 'get_job', 'get_song_map', 'get_analysis']}
 
 
 @mcp.tool(structured_output=True)

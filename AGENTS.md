@@ -1,5 +1,5 @@
 # Purpose
-Maintained local source for https://github.com/Labyricorn/all-in-one, derived from mir-aidj/all-in-one.
+Maintained local source for Two-In-One Music and Lyric Analysis Studio at https://github.com/Labyricorn/two-in-one, derived from mir-aidj/all-in-one.
 
 ## Ownership
 - Analyzer source, isolated `.venv`, and Windows dependency constraints.

@@ -45,9 +45,9 @@ train = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/Labyricorn/all-in-one#readme"
-Issues = "https://github.com/Labyricorn/all-in-one/issues"
-Source = "https://github.com/Labyricorn/all-in-one"
+Documentation = "https://github.com/Labyricorn/two-in-one#readme"
+Issues = "https://github.com/Labyricorn/two-in-one/issues"
+Source = "https://github.com/Labyricorn/two-in-one"
 
 [project.scripts]
 allin1 = "allin1.cli:main"

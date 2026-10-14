@@ -1,14 +1,15 @@
 # Attribution and maintenance
 
-This is Labyricorn's maintained fork of
+Two-In-One Music and Lyric Analysis Studio is Labyricorn's maintained fork of
 [mir-aidj/all-in-one](https://github.com/mir-aidj/all-in-one), originally created by
 Taejun Kim. The original repository history, MIT license, copyright notice and
 research citation are retained. The initial installed upstream revision was
 `18e78903c0365147a2c5d4e5e57ebf88cb7d800e`.
 
-Labyricorn additions include the unified song CLI, MCP interface, lyric
-transcription/alignment adapters, combined song maps, persistent/offline jobs,
-tests, Windows constraints and Demucs compatibility fixes. Newly added project
+Labyricorn additions include the browser analysis/review studio, unified song CLI,
+MCP interface, lyric transcription/alignment adapters, combined song maps,
+persistent/offline jobs, versioned project corrections, tests, Windows constraints
+and Demucs compatibility fixes. Newly added project
 code is provided under the repository's MIT license. Keeping the `allin1` package
 name preserves the existing API; repository branding can evolve separately.
 

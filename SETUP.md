@@ -16,7 +16,8 @@ their spoken content and parenthetical vocals remain alignment content.
 
 ## Review and correct a project
 
-Run the song service launcher; it opens and connects Song Studio automatically.
+Run the song service launcher; it opens and connects Two-In-One Music and Lyric
+Analysis Studio automatically.
 The initial Analyze tab selects new audio/video and starts full analysis with
 automatic transcription or supplied lyrics. Jobs follows progress and opens
 results in Review with waveform/playback and word, beat and section corrections.
