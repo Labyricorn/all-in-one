@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mgmv:project:1",
+  "title": "MGMV project snapshot",
+  "type": "object",
+  "required": ["schema_version", "project_id", "revision", "current_revision", "source_sha256", "base_analysis_sha256", "timebase", "artifacts", "analysis"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "revision": {"type": "integer", "minimum": 0},
+    "current_revision": {"type": "integer", "minimum": 0},
+    "source_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "base_analysis_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timebase": {"type": "object"},
+    "analysis": {"type": "object"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "path", "sha256", "sample_rate", "channels", "duration_seconds", "offset_seconds", "processing_identity"],
+        "properties": {
+          "id": {"enum": ["mix", "vocals"]},
+          "path": {"type": "string", "enum": ["mix.wav", "vocals.wav"]},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "sample_rate": {"type": "integer", "minimum": 1},
+          "channels": {"type": "integer", "minimum": 1},
+          "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+          "offset_seconds": {"const": 0},
+          "processing_identity": {"type": "string"}
+        }
+      }
+    }
+  }
+}

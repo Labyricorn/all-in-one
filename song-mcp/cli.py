@@ -14,24 +14,7 @@ from pathlib import Path
 import psutil
 from common import ROOT,JOBS,SOURCE_DIR,ANALYZER_PYTHON,worker_command,acquire_slot,release_slot,read_json,write_json,probe_media
 from songmap import planning_page
-
-
-def digest(path):
-    hasher=hashlib.sha256()
-    with Path(path).open('rb') as file:
-        for chunk in iter(lambda:file.read(1024*1024),b''):hasher.update(chunk)
-    return hasher.hexdigest()
-
-
-def prepare_lyrics(text):
-    lines=[];annotations=[]
-    for index,line in enumerate(text.splitlines(),1):
-        match=re.match(r'^\s*(\[[^\]\n]+:\])\s*(.*)$',line)
-        if match:
-            annotations.append({'source_line':index,'label':match[1],'vocal_text':match[2]})
-            lines.append(match[2])
-        else:lines.append(line)
-    return '\n'.join(lines),annotations
+from core.requests import digest, prepare_lyrics, prepare_request
 
 
 def parser():
@@ -149,7 +132,8 @@ def main(argv=None):
         job_id=uuid.uuid4().hex;acquire_slot(job_id)
         directory=JOBS/job_id;directory.mkdir()
         legacy=args.structure_json.resolve() if args.structure_json else out/f'{source.stem}.json'
-        request={'path':str(source),'probe':probe,'lyrics_mode':args.lyrics,'lyrics_text':normalized,'lyrics_source_text':text,'lyric_annotations':args._annotations,'language':args.language,'lyric_model':args.lyric_model,'music_model':args.model,'offline':args.offline,'reuse_structure':str(legacy) if not args.overwrite and args.model=='harmonix-all' and legacy.is_file() else None,'reuse_stems_job':reusable_job,'source_sha256':signature['source_sha256']}
+        request=prepare_request(source,probe,args.lyrics,text,args.language,args.lyric_model,args.model,args.offline)
+        request.update(reuse_structure=str(legacy) if not args.overwrite and args.model=='harmonix-all' and legacy.is_file() else None,reuse_stems_job=reusable_job)
         write_json(directory/'request.json',request)
         write_json(directory/'status.json',{'job_id':job_id,'status':'queued','stage':'starting_worker','created':time.time(),'updated':time.time(),'source':str(source),'log_path':str(directory/'worker.log')})
         env=dict(os.environ,OMP_NUM_THREADS='4',MKL_NUM_THREADS='4',PYTHONUNBUFFERED='1',PYTHONIOENCODING='utf-8')

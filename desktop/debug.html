@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8"><title>MGMV playback debugger</title>
+<style>body{font:16px system-ui;max-width:850px;margin:40px auto;background:#171b24;color:#eee}input,button,select{font:inherit;margin:5px;padding:8px}pre{white-space:pre-wrap}input[type=range]{width:90%}</style>
+<h1>Playback debugger</h1><p>Uses project-owned decoded audio and the shared playback module.</p>
+<input id="token" type="password" placeholder="Discovery bearer token" aria-label="Discovery bearer token">
+<input id="project" placeholder="Project ID" aria-label="Project ID"><button id="load">Load</button>
+<p><button id="play">Play</button><button id="pause">Pause</button><select id="track" aria-label="Track"><option>mix</option><option>vocals</option></select>
+<select id="rate" aria-label="Rate"><option value="1">1×</option><option value="0.75">0.75×</option><option value="0.5">0.5×</option></select>
+<label><input id="click" type="checkbox">Metronome</label></p>
+<input id="seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="Seek">
+<p><input id="start" type="number" min="0" step="0.1" value="0" aria-label="Loop start"><input id="end" type="number" min="0" step="0.1" value="5" aria-label="Loop end"><button id="loop">Loop</button><button id="unloop">Clear loop</button></p>
+<pre id="status">Load a project with a mix artifact.</pre><pre id="words"></pre>
+<script type="module">
+import { Playback } from '/debug/playback.mjs';
+const $ = id => document.getElementById(id);
+let playback, analysis;
+const safe = action => async () => {try {await action();}catch(error){$('status').textContent=error.message;}};
+$('load').onclick = safe(async () => {
+  const headers={Authorization:'Bearer '+$('token').value};
+  const response=await fetch('/api/v1/projects/'+encodeURIComponent($('project').value),{headers});
+  if (!response.ok) throw new Error((await response.json()).error);
+  const project=await response.json(); analysis=project.analysis;
+  playback?.dispose(); playback=new Playback(new AudioContext());
+  await playback.load(project.artifacts.map(a=>({...a,url:'/api/v1/projects/'+project.project_id+'/artifacts/'+a.id})), url=>fetch(url,{headers}));
+  $('seek').max=playback.duration; playback.setMetronome($('click').checked,analysis.beats);
+});
+$('play').onclick=safe(()=>playback.play()); $('pause').onclick=safe(()=>playback.pause());
+$('track').onchange=safe(()=>playback.selectTrack($('track').value));
+$('rate').onchange=safe(()=>playback.setRate(Number($('rate').value)));
+$('seek').oninput=safe(()=>playback.seek(Number($('seek').value)));
+$('loop').onclick=safe(()=>playback.setLoop(Number($('start').value),Number($('end').value)));
+$('unloop').onclick=safe(()=>playback.setLoop());
+$('click').onchange=safe(()=>playback.setMetronome($('click').checked,analysis.beats));
+setInterval(()=>playback?.scheduleMetronome(),50);
+function repaint(){if(playback&&analysis){$('seek').value=playback.position();$('status').textContent=JSON.stringify({seconds:playback.position(),rate:playback.rate,track:playback.track,loop:playback.loop,baseLatency:playback.context.baseLatency,outputLatency:playback.context.outputLatency},null,2);$('words').textContent=playback.active(analysis.lyrics.words).map(w=>w.text).join(' / ');}requestAnimationFrame(repaint);}repaint();
+</script>

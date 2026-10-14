@@ -14,6 +14,12 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from common import JOBS, ROOT, ANALYZER, worker_command, acquire_slot, job_dir, probe_media, read_json, release_slot, status, write_json
 from songmap import planning_page
+from core.requests import prepare_request
+from core.projects import ProjectStore
+
+
+def project_store():
+    return ProjectStore(os.environ.get('MGMV_PROJECT_ROOT', str(ROOT / 'song-projects')))
 
 mcp = MCPServer('MGMV Song Analysis', version='1.0', instructions='Submit local audio/video with submit_song; poll get_job until complete or partial; retrieve get_song_map and paged get_analysis. All timings are seconds from original decoded audio start. Lyrics and singing word timings are estimates: review them, retain null timings, and do not invent lyrics or emotional interpretations. You author the motion-graphics video plan; this server does not render it.')
 
@@ -23,7 +29,7 @@ def tool_errors(function):
     def wrapped(*args, **kwargs):
         try:
             return function(*args, **kwargs)
-        except (ValueError, OSError, subprocess.TimeoutExpired, psutil.Error) as error:
+        except (ValueError, KeyError, TypeError, OSError, subprocess.TimeoutExpired, psutil.Error) as error:
             raise ToolError(str(error)) from error
     return wrapped
 
@@ -49,22 +55,13 @@ def submit_song(path: str, lyrics_mode: Literal['auto', 'align', 'instrumental',
     Set offline=true to require cached models and prevent model-network access.
     """
     source, probe = probe_media(path)
-    if lyrics_mode == 'align' and (not lyrics_text or not lyrics_text.strip() or not language):
-        raise ValueError('Alignment requires nonempty lyrics_text and a language code, for example en.')
-    if lyrics_mode != 'align' and lyrics_text is not None:
-        raise ValueError('Supplied lyrics require lyrics_mode=align; they will not be silently ignored.')
-    if lyrics_text is not None and len(lyrics_text) > 100000:
-        raise ValueError('Lyrics exceed the 100,000 character limit.')
-    if language is not None:
-        from faster_whisper.tokenizer import _LANGUAGE_CODES
-        if language not in _LANGUAGE_CODES:
-            raise ValueError('Unsupported language code. Use a Whisper language code such as en, es, or ja.')
+    request = prepare_request(source, probe, lyrics_mode, lyrics_text, language, lyric_model, music_model, offline)
     job_id = uuid.uuid4().hex
     acquire_slot(job_id)
     directory = JOBS / job_id
     try:
         directory.mkdir()
-        write_json(directory / 'request.json', {'path': str(source), 'probe': probe, 'lyrics_mode': lyrics_mode, 'lyrics_text': lyrics_text, 'language': language, 'lyric_model': lyric_model, 'music_model': music_model, 'offline': offline})
+        write_json(directory / 'request.json', request)
         write_json(directory / 'status.json', {'job_id': job_id, 'status': 'queued', 'stage': 'starting_worker', 'created': time.time(), 'updated': time.time(), 'source': str(source), 'log_path': str(directory / 'worker.log')})
         env = dict(os.environ, OMP_NUM_THREADS='4', MKL_NUM_THREADS='4', PYTHONUNBUFFERED='1', PYTHONIOENCODING='utf-8')
         if os.name == 'nt':
@@ -128,6 +125,29 @@ def list_jobs(limit: int = 20) -> dict[str, Any]:
     return {'jobs': [status(p.parent.name) for p in paths[:limit]], 'total': len(paths)}
 
 
+@mcp.tool(structured_output=True)
+@tool_errors
+def cancel_job(job_id: str) -> dict[str, Any]:
+    """Cancel an explicitly selected active job; leave its partial artifacts and log for debugging."""
+    directory = job_dir(job_id)
+    value = status(job_id)
+    if value['status'] not in ('queued', 'running'): return value
+    info = read_json(directory / 'process.json')
+    try:
+        process = psutil.Process(info['pid'])
+        if abs(process.create_time() - info['created']) >= 1: raise ValueError('Worker PID was reused; refusing to terminate an unrelated process.')
+        children = process.children(recursive=True)
+        for child in children: child.terminate()
+        process.terminate()
+        _, survivors = psutil.wait_procs([process, *children], timeout=5)
+        for survivor in survivors: survivor.kill()
+    except psutil.NoSuchProcess: pass
+    value.update(status='cancelled', stage='cancelled', updated=time.time())
+    write_json(directory / 'status.json', value)
+    release_slot(job_id)
+    return value
+
+
 def result_for(job_id):
     state = status(job_id)
     if state['status'] not in ('complete', 'partial'):
@@ -172,6 +192,74 @@ def get_song_map(job_id: str, start_seconds: float = 0, end_seconds: float | Non
     if end <= start_seconds:
         raise ValueError('end_seconds must exceed start_seconds.')
     return planning_page(result, start_seconds, end, offset, limit)
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def list_projects() -> dict[str, Any]:
+    """List persistent editable projects shared with the GUI and CLI."""
+    return {'projects': project_store().list()}
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def open_project(analysis_path: str | None = None, job_id: str | None = None) -> dict[str, Any]:
+    """Import a combined analysis or completed job; retain raw predictions and cached PCM artifacts without separation."""
+    if (analysis_path is None) == (job_id is None):
+        raise ValueError('Supply exactly one of analysis_path or job_id.')
+    artifacts = {}
+    if job_id:
+        result_for(job_id)
+        directory = job_dir(job_id)
+        analysis_path = str(directory / 'analysis.json')
+        for role, relative in [('mix', 'original.wav'), ('vocals', 'demix/htdemucs/original/vocals.wav')]:
+            if (directory / relative).is_file(): artifacts[role] = str(directory / relative)
+    project = project_store().import_analysis(analysis_path, artifacts)
+    return {k: v for k, v in project.items() if k != 'analysis'}
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def read_project(project_id: str, component: Literal['overview', 'words', 'lines', 'beats', 'sections', 'events', 'review_items', 'history', 'proposals'] = 'overview', offset: int = 0, limit: int = 100, revision: int | None = None) -> dict[str, Any]:
+    """Read a project revision or bounded records with stable IDs for correction proposals."""
+    if offset < 0 or not 1 <= limit <= 500: raise ValueError('offset >= 0 and limit 1..500 required.')
+    store = project_store()
+    project = store.read(project_id, revision)
+    if component == 'overview': return {k: v for k, v in project.items() if k != 'analysis'}
+    data = project['analysis']
+    if component == 'proposals': rows = store.proposals(project_id)
+    elif component == 'history': rows = store.history(project_id)
+    elif component in ('words', 'lines'): rows = data['lyrics']['words' if component == 'words' else 'phrases']
+    else: rows = data[component]
+    return {'project_id': project_id, 'revision': project['revision'], 'items': rows[offset:offset + limit], 'total': len(rows), 'next_offset': offset + limit if offset + limit < len(rows) else None}
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def propose_correction(project_id: str, correction: dict[str, Any]) -> dict[str, Any]:
+    """Save a validated suggestion for review, without changing the current project."""
+    return project_store().propose(project_id, correction)
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def apply_correction(project_id: str, correction: dict[str, Any]) -> dict[str, Any]:
+    """Apply an explicitly user-authorized correction; requires base revision/hash and retry-safe transaction_id."""
+    return project_store().apply(project_id, correction, actor='mcp')
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def accept_correction(proposal_id: str) -> dict[str, Any]:
+    """Apply a saved proposal only when explicitly authorized by the user. Stale proposals conflict."""
+    return project_store().accept(proposal_id)
+
+
+@mcp.tool(structured_output=True)
+@tool_errors
+def export_project(project_id: str, output_path: str, revision: int | None = None) -> dict[str, Any]:
+    """Export reproducible corrected combined JSON while preserving raw project predictions."""
+    return project_store().export(project_id, output_path, revision)
 
 
 if __name__ == '__main__':

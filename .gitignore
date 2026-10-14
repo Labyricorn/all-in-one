@@ -235,6 +235,10 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,linux
 # Local song-analysis runtime and user media
 song-jobs/
+song-inputs/
+song-projects/
+song-service.json
+song-service.lock
 song-results/
 model-cache/
 verification/

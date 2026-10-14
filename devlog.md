@@ -1,5 +1,86 @@
 # Development log
 
+## 2026-10-13 — Authorized Song Studio publication
+
+- User explicitly requested commit and push of the current implementation to
+  Labyricorn/all-in-one. Included the shared project/API/MCP backend required by
+  the studio, Analyze/Jobs/Review/Export UI, playback, source packaging, tests,
+  canonical launchers and documentation.
+- Origin main matched the local base before publication. Full companion suite
+  passes: 41 Python tests and four playback tests, plus frontend syntax checking.
+  Runtime projects, uploaded media, models, caches, discovery credentials and
+  parent-workspace verification artifacts remain excluded from Git.
+
+## 2026-10-13 — Song Studio process tabs and new analysis
+
+- Replaced the review-only page with Analyze, Jobs, Review and Export tabs.
+  Analyze selects/ previews audio/video, loads optional lyric text, chooses
+  language/models/offline mode and submits the existing detached worker.
+- Added authenticated streamed media import into runtime song-inputs, audio-stream
+  validation and rejection/interruption cleanup. Jobs displays actual stages,
+  cancellation, diagnostics and direct result opening with cached PCM tracks.
+- Added decoded mix waveform, section bands, downbeat ticks, seek-on-word/ waveform,
+  loops and corrected JSON downloads. Fixed phrase filtering via stable phrase
+  membership and form rounding without changing untouched timestamp precision.
+- Source packaging now includes frontend JS/CSS. Sixteen backend/project/package
+  tests and four playback tests pass; syntax and whitespace checks pass.
+- Verified a real offline single-model analysis on an 8-second generated rhythm
+  fixture in verification/studio-smoke, opened its result in the browser, saved
+  a section revision and downloaded the corrected JSON. My Own Song filtering/
+  word selection verified without edits. Screenshots under verification/studio-ui.
+  Automated Chrome file selection was blocked by extension file-URL permission;
+  upload and real submission were verified through the local API.
+
+## 2026-10-13 — File picker and usable project startup
+
+- Added a browser JSON picker and parsed-data import through the shared project
+  store; retained local paths as an optional fallback. JSON-only projects can be
+  edited without failing audio initialization.
+- Moved the automatic service token behind Advanced connection, kept it in tab
+  session storage for refresh, added an empty-project message and song names.
+- Imported the existing cached My Own Song job into the default store with its
+  two original-origin audio tracks. Fourteen project/HTTP tests plus JavaScript
+  syntax and whitespace checks pass.
+
+## 2026-10-13 — Direct review UI launch
+
+- Launcher opens the browser after API startup and reconnects to an existing
+  compatible service. Console prints a direct UI link. Added --no-browser.
+- Browser consumes the connection token from the URL fragment, clears it from
+  the address bar and loads the project list automatically.
+- Verified real browser startup: page/assets and authenticated project list return
+  200. Three HTTP/MCP tests pass outside sandbox restrictions; sandbox runs timed
+  out before startup. JavaScript syntax and diff whitespace checks pass.
+
+## 2026-10-13 — Browser project review UI
+
+- Added a local browser editor at the service's `/app` route for importing/listing
+  projects, playing project mix/vocals, selecting words, editing word text/timing,
+  beat times and section labels/bounds, and reading review flags. Saves use shared
+  core correction transactions with revision/hash preconditions.
+- Kept `/debug` as a focused playback harness. Documented UI startup and scope in
+  the workspace/fork guides. This is not the planned Tauri shell; waveform,
+  undo/redo controls, line/event forms and analysis-job UI remain future work.
+
+## 2026-10-13 — Shared projects, local API/MCP and playback
+
+- Implemented the user-requested existing-runtime backend milestone: shared request
+  normalization; versioned SQLite projects/raw predictions/corrections/proposals;
+  stable IDs, atomic revisions, retry handling, restore and artifact validation.
+- Added project CLI, loopback API and live Streamable HTTP MCP alongside stdio,
+  durable revision events/job polling, cancellation and startup discovery leases.
+  Parent workspace launchers select its existing runtime paths and environments.
+- Added desktop playback module/debugger and clock/loop/metronome regressions,
+  doctor, development source packaging and song-mcp/BACKEND.md. Tauri editor,
+  installer and automatic reanalysis rebasing remain subsequent milestones.
+- Migrated a verification copy of the real song and cached mix/vocals, caught the
+  legacy rounded section overrun with preserved provenance, and exercised browser
+  half-speed vocals/loop playback. User media and published exports remain intact.
+- Verification: 39 Python tests and four Node tests pass; actual HTTP/stdio MCP,
+  cross-process revisions, cancellation and CLI export parity are covered. Both
+  environments' imports/dependency consistency and launcher help pass. No installed
+  packages changed; no commit or push performed. Workspace devlog records artifacts.
+
 ## 2026-10-13 — Incorporate Labyricorn's song-analysis additions
 
 - User requested a maintained fork that also includes the existing CLI and lyric/MCP

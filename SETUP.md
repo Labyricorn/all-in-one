@@ -14,6 +14,17 @@ its decoded start. Singing alignment may be incomplete: retain null times and
 review the audio. Speaker labels such as `[AI Voice:]` are stored as annotations;
 their spoken content and parenthetical vocals remain alignment content.
 
+## Review and correct a project
+
+Run the song service launcher; it opens and connects Song Studio automatically.
+The initial Analyze tab selects new audio/video and starts full analysis with
+automatic transcription or supplied lyrics. Jobs follows progress and opens
+results in Review with waveform/playback and word, beat and section corrections.
+Export downloads corrected JSON. Review also opens saved projects and imports
+existing combined analysis JSON. See [the studio guide](desktop/README.md).
+Terminal CLI workflows remain independent; connected MCP clients use the live
+service, and stdio MCP remains available on its own.
+
 ## Outputs and options
 
 All exported files go under `-o`: combined `.analysis.json`, `.song-map.json`,
@@ -48,6 +59,14 @@ after lyric/preview failure, 130 cancelled.
 `analyze-music.cmd` is the **structure-only** CLI. It forwards upstream `allin1`
 options and does not transcribe or align lyrics. See the upstream reference in
 [README.md](README.md) for its switches and Python API.
+
+## Editable projects, live backend and playback
+
+The existing-runtime backend milestone adds `song-project.cmd`, `song-service.cmd`,
+versioned corrections, shared stdio/HTTP MCP projects, a playback module/debugger,
+doctor and reproducible development packaging. See [song-mcp/BACKEND.md](song-mcp/BACKEND.md)
+for commands, schemas, API routes and verification. Tauri editor/installer work
+remains a subsequent milestone.
 
 ## Windows CPU installation
 

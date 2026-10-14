@@ -29,3 +29,4 @@ Maintained local source for https://github.com/Labyricorn/all-in-one, derived fr
 
 ## Child DOX Index
 - `song-mcp/AGENTS.md`: canonical unified CLI, server, lyric backends, jobs, adapters and tests.
+- `desktop/AGENTS.md`: shared playback module, developer harness and synchronization tests.

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MGMV · Song Studio</title><link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand"><span class="brand-icon" aria-hidden="true">▥</span><div><h1>MGMV <span>Song Studio</span></h1><p>From audio to a timing map you can shape.</p></div></div>
+    <div class="connection"><span id="connectionStatus">Connecting…</span><details><summary>Connection settings</summary><label>Service token<input id="token" type="password" autocomplete="off"></label><button id="connect" type="button">Connect</button></details></div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Song workflow">
+    <button id="tab-analyze" role="tab" aria-selected="true" aria-controls="panel-analyze" data-tab="analyze"><span>01</span> Analyze</button>
+    <button id="tab-jobs" role="tab" aria-selected="false" aria-controls="panel-jobs" data-tab="jobs" tabindex="-1"><span>02</span> Jobs <small id="jobCount"></small></button>
+    <button id="tab-review" role="tab" aria-selected="false" aria-controls="panel-review" data-tab="review" tabindex="-1"><span>03</span> Review</button>
+    <button id="tab-export" role="tab" aria-selected="false" aria-controls="panel-export" data-tab="export" tabindex="-1"><span>04</span> Export</button>
+  </nav>
+  <main>
+    <section id="panel-analyze" class="panel" role="tabpanel" aria-labelledby="tab-analyze">
+      <div class="intro"><p class="eyebrow">START WITH A SONG</p><h2>Bring the audio.<br>Find the structure.</h2><p>Analyze beats, sections and lyrics, then listen and refine the result.</p></div>
+      <form id="analyzeForm" class="analyze-layout">
+        <div class="card source-card">
+          <h3>Audio or video</h3><label class="file-area" for="audioFile"><span class="file-icon" aria-hidden="true">♫</span><strong id="audioName">Choose a song</strong><span id="audioDetails">WAV, MP3, FLAC, M4A or video with audio</span><input id="audioFile" type="file" accept="audio/*,video/*,.wav,.mp3,.flac,.m4a,.ogg,.aac,.mp4,.mov,.mkv" required></label>
+          <p class="hint">Your media stays on this computer. Analysis continues if you close the browser.</p>
+          <audio id="audioPreview" controls hidden></audio>
+          <label>Lyric workflow<select id="lyricsMode"><option value="auto">Transcribe automatically</option><option value="align">Align my supplied lyrics</option><option value="instrumental">Instrumental — no lyrics</option><option value="none">Music structure only</option></select></label>
+          <div id="lyricsInput" hidden><label>Lyrics<textarea id="lyricsText" rows="9" placeholder="Paste your lyrics. Keep line breaks and repeated choruses."></textarea></label><label class="secondary-file">Or load a lyrics text file<input id="lyricsFile" type="file" accept=".txt,text/plain"></label></div>
+        </div>
+        <div class="card settings-card">
+          <p class="eyebrow">ANALYSIS SETTINGS</p><h3>Choose the pass</h3>
+          <label>Language<select id="language"><option value="">Detect automatically</option><option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option><option value="ja">Japanese</option><option value="ko">Korean</option><option value="zh">Chinese</option></select></label>
+          <label>Music analysis<select id="musicModel"><option value="harmonix-all">Full ensemble</option><option value="harmonix-fold0">Single model · faster</option></select></label>
+          <label>Lyric model<select id="lyricModel"><option value="tiny">Tiny</option><option value="base" selected>Base</option><option value="small">Small</option><option value="medium">Medium</option></select></label>
+          <label class="check"><input id="offline" type="checkbox" checked> Use cached models only</label><p class="hint">Clear this to allow missing model downloads. CPU analysis runs one song at a time. Singing timings are estimates.</p>
+          <button id="startAnalysis" class="primary large" type="submit">Start analysis <span aria-hidden="true">→</span></button><p id="submissionState" class="hint" role="status">Choose a file to begin.</p>
+        </div>
+      </form>
+    </section>
+    <section id="panel-jobs" class="panel" role="tabpanel" aria-labelledby="tab-jobs" hidden>
+      <div class="section-heading"><div><p class="eyebrow">ANALYSIS QUEUE</p><h2>Follow the work</h2><p class="hint">Progress updates automatically. Completed results open directly in Review.</p></div><button id="refreshJobs" type="button">Refresh jobs</button></div>
+      <div id="jobs" class="jobs-grid"></div><p id="emptyJobs" class="empty" hidden>No analysis jobs yet. Start with a song in Analyze.</p>
+    </section>
+    <section id="panel-review" class="panel" role="tabpanel" aria-labelledby="tab-review" hidden>
+      <div class="section-heading"><div><p class="eyebrow">LISTEN &amp; REFINE</p><h2>Make the timing yours</h2></div><div class="row"><select id="projects" aria-label="Saved project"><option value="">Choose a project</option></select><button id="refresh" type="button">Refresh</button></div></div>
+      <p id="emptyProjects" class="empty" hidden>No saved projects yet. Start an analysis or import a result below.</p>
+      <details class="card compact"><summary>Import an existing analysis JSON</summary><form id="import"><label>Analysis file<input id="analysisFile" type="file" accept=".json,application/json"></label><details><summary>Or enter a file path</summary><label>Local JSON path<input id="analysisPath" placeholder="Optional local path"></label></details><button type="submit">Import result</button></form></details>
+      <section id="editor" class="card" hidden>
+        <div class="row spread"><div><h3 id="projectTitle">Song</h3><small id="revision"></small></div><button id="reload" type="button">Reload latest</button></div>
+        <div class="player">
+          <div class="row"><button id="play" type="button">Play</button><button id="pause" type="button">Pause</button><select id="track" aria-label="Audio track"><option value="mix">Mix</option><option value="vocals">Vocals</option></select><select id="rate" aria-label="Playback speed"><option value="1">1×</option><option value=".75">0.75×</option><option value=".5">0.5×</option></select><label class="check"><input id="metro" type="checkbox"> Metronome</label><span id="activeWords" aria-live="off"></span></div>
+          <div class="wave-wrap"><canvas id="waveform" width="1200" height="110" aria-label="Audio waveform"></canvas><div id="playhead"></div></div>
+          <input id="seek" type="range" min="0" max="1" step=".01" value="0" aria-label="Seek audio"><div class="row spread"><span id="clock">0:00</span><span id="duration">0:00</span></div>
+          <div class="row loop-controls"><label>Loop start<input id="loopStart" type="number" min="0" step=".01" value="0"></label><label>Loop end<input id="loopEnd" type="number" min="0" step=".01" value="5"></label><button id="setLoop" type="button">Loop region</button><button id="clearLoop" type="button">Clear loop</button></div>
+        </div>
+        <div class="columns"><section><h3>Words</h3><div class="filters"><input id="wordFilter" placeholder="Filter words" aria-label="Filter words"><select id="lineSelect" aria-label="Filter line"><option value="">All lines</option></select></div><div id="words" class="list"></div></section>
+          <section class="edit-forms"><h3>Edit selected word</h3><form id="wordForm"><label>Text<input id="wordText" required></label><div class="row"><label>Start (s)<input id="wordStart" type="number" min="0" step=".001"></label><label>End (s)<input id="wordEnd" type="number" min="0" step=".001"></label></div><button>Save word</button></form>
+          <h3>Beats</h3><form id="beatForm"><label>Beat<select id="beatSelect"></select></label><label>Time (s)<input id="beatTime" type="number" min="0" step=".001" required></label><button>Save beat</button></form>
+          <h3>Sections</h3><form id="sectionForm"><label>Section<select id="sectionSelect"></select></label><label>Label<input id="sectionLabel" required></label><div class="row"><label>Start (s)<input id="sectionStart" type="number" min="0" step=".001" required></label><label>End (s)<input id="sectionEnd" type="number" min="0" step=".001" required></label></div><button>Save section</button></form></section>
+        </div><details><summary>Review flags</summary><pre id="review"></pre></details>
+      </section>
+    </section>
+    <section id="panel-export" class="panel" role="tabpanel" aria-labelledby="tab-export" hidden>
+      <div class="intro"><p class="eyebrow">READY FOR PRODUCTION</p><h2>Take the map with you.</h2><p>Download the selected project's latest corrected analysis.</p></div>
+      <div class="card export-card"><h3 id="exportTitle">Choose a project in Review</h3><p id="exportInfo" class="hint">Word timings, beats and sections share the original audio timebase.</p><button id="exportJson" type="button" disabled>Download analysis JSON</button></div>
+    </section>
+  </main>
+  <output id="status" role="status" aria-live="polite">Connecting to the local service…</output>
+  <script type="module" src="/app/app.js"></script>
+</body></html>
